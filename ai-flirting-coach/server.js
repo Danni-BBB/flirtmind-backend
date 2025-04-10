@@ -1,71 +1,38 @@
 import express from 'express';
-import { Configuration, OpenAIApi } from 'openai';
 import dotenv from 'dotenv';
+import OpenAI from 'openai';
 
-dotenv.config(); // Load biến môi trường từ .env
+dotenv.config();
 
 const app = express();
-const port = 5000;
-
-// Cấu hình OpenAI với biến môi trường
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY, // Đọc key từ file .env
-});
-const openai = new OpenAIApi(configuration);
+const port = process.env.PORT || 3001;
 
 app.use(express.json());
 
-// Pickup Line endpoint
-app.post('/pickup-line', async (req, res) => {
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.post('/api/generate', async (req, res) => {
+  const { message } = req.body;
+
   try {
-    const { situation } = req.body;
-    const response = await openai.createCompletion({
-      model: 'gpt-4',
-      prompt: `Create a pickup line for the following situation: ${situation}`,
-      max_tokens: 150,
-      temperature: 0.7,
+    const chat = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: message }],
     });
-    res.json({ pickupLine: response.data.choices[0].text.trim() });
+
+    res.json({ response: chat.choices[0].message.content });
   } catch (error) {
-    console.error('Error generating pickup line:', error.response?.data || error.message);
-    res.status(500).send('Error generating pickup line');
+    console.error('Error from OpenAI:', error);
+    res.status(500).json({ error: 'Lỗi khi gọi OpenAI' });
   }
 });
 
-// Chat Analyzer endpoint
-app.post('/chat-analyzer', async (req, res) => {
-  try {
-    const { chatHistory } = req.body;
-    const response = await openai.createCompletion({
-      model: 'gpt-4',
-      prompt: `Analyze the following chat and suggest improvements: ${chatHistory}`,
-      max_tokens: 200,
-      temperature: 0.7,
-    });
-    res.json({ analysis: response.data.choices[0].text.trim() });
-  } catch (error) {
-    console.error('Error analyzing chat:', error.response?.data || error.message);
-    res.status(500).send('Error analyzing chat');
-  }
-});
-
-// Profile Mastery endpoint
-app.post('/profile-master', async (req, res) => {
-  try {
-    const { profileText } = req.body;
-    const response = await openai.createCompletion({
-      model: 'gpt-4',
-      prompt: `Provide suggestions to improve this dating profile: ${profileText}`,
-      max_tokens: 200,
-      temperature: 0.7,
-    });
-    res.json({ suggestions: response.data.choices[0].text.trim() });
-  } catch (error) {
-    console.error('Error generating profile suggestions:', error.response?.data || error.message);
-    res.status(500).send('Error generating profile suggestions');
-  }
+app.get('/', (req, res) => {
+  res.send('Server is running...');
 });
 
 app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
