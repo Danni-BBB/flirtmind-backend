@@ -25,7 +25,7 @@ app.post('/api/generate', async (req, res) => {
     res.json({ response: chat.choices[0].message.content });
   } catch (error) {
     console.error('Error from OpenAI:', error);
-    res.status(500).json({ error: 'Lỗi khi gọi OpenAI' });
+    res.status(500).json({ error: 'Lỗi khi gọi OpenAI', detail: error.message });
   }
 });
 
@@ -34,5 +34,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  console.log(`✅ Server is running on http://localhost:${port}`);
 });
